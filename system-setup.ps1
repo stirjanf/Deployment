@@ -36,6 +36,11 @@ function Print {
     }
 }
 
+Start-Service w32time
+Set-Service w32time -StartupType Automatic
+w32tm /config /manualpeerlist:"time.windows.com" /syncfromflags:manual /reliable:YES /update
+w32tm /resync
+
 New-LocalUser -Name "admin" -NoPassword
 Set-LocalUser -Name "admin" -PasswordNeverExpires $true 
 Add-LocalGroupMember -Group "Administrators" -Member "admin"

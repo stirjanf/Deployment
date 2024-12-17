@@ -238,91 +238,32 @@ function Install {
     }
 }
 
-function Timer {
+function TypeInit {
     <#
     .SYNOPSIS
-        Display message every $s seconds
-    .PARAMETER s
-        Determines how many seconds until some event
-    .PARAMETER text
-        Text to display 
-    .PARAMETER text2
-        Banner to display 
+        Keyboard event declarations
     .NOTES
         Author: fs
-        Last edit: 20_11_2024 fs
+        Last edit: 17_12_2024 fs
         Version:
             1.0 - added basic functionality
     #>
 
-    param (
-        [Parameter(Mandatory=$true)] [int] $s, 
-        [Parameter(Mandatory=$true)] [string] $text,
-        [string] $text2
-    )
-
-    for ($i = $s; $i -ge 1; $i--) {
-        if ($text2) { DisplayBanner -text $text2 }
-        Write-Host "$($text) $i s"
-        Start-Sleep -s 1
-        Clear-Host
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type @"
+    using System;
+    using System.Runtime.InteropServices;
+    public class User32 {
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
+        public const byte VK_LWIN = 0x5B;   
+        public const byte VK_LEFT = 0x25;   
+        public const byte VK_RETURN = 0x0D; 
+        public const byte VK_UP = 0x26;
+        public const uint KEYEVENTF_KEYDOWN = 0x0000; 
+        public const uint KEYEVENTF_KEYUP = 0x0002; 
     }
-}
-
-function GetActive {
-    <#
-    .SYNOPSIS
-        Get active power plan
-    .NOTES
-        Author: fs
-        Last edit: 5_12_2024 fs
-        Version:
-            1.0 - added basic functionality
-    #>
-
-    $output = powercfg /list
-    $msg = $output -split "`n"
-    for ($i = 0; $i -lt $msg.Length; $i++) {
-        if ($msg[$i] -match "guid" -and $msg[$i] -match '\*') {
-            $index = $i
-            break
-        }
-    }
-    return $msg[$index]
-}
-
-function Time {
-    <#
-    .SYNOPSIS
-        Returns time in specific format
-    .NOTES
-        Author: fs
-        Last edit: 6_12_2024 fs
-        Version:
-            1.0 - added basic functionality
-    #>
-    return (Get-Date -Format '|dd.MM.yyyy, HH:mm:ss|')
-}
-
-function Print {
-    <#
-    .SYNOPSIS
-        Writes output with time format
-    .NOTES
-        Author: fs
-        Last edit: 6_12_2024 fs
-        Version:
-            1.0 - added basic functionality
-    #>
-
-    param ( [string] $string )
-
-    if ($string.StartsWith("`n")) {
-        $new = $string.Split([Environment]::NewLine)
-        Write-Host "`n$(Time) $($new[1])"
-    } else {
-        Write-Host "$(Time) $string"
-    }
+"@
 }
 
 function SplitView {
@@ -336,20 +277,7 @@ function SplitView {
             1.0 - added basic functionality
     #>
 
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type @"
-    using System;
-    using System.Runtime.InteropServices;
-    public class User32 {
-        [DllImport("user32.dll")]
-        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
-        public const byte VK_LWIN = 0x5B;   
-        public const byte VK_LEFT = 0x25;   
-        public const byte VK_RETURN = 0x0D; 
-        public const uint KEYEVENTF_KEYDOWN = 0x0000; 
-        public const uint KEYEVENTF_KEYUP = 0x0002; 
-    }
-"@
+    TypeInit
     [User32]::keybd_event([User32]::VK_LWIN, 0, [User32]::KEYEVENTF_KEYDOWN, 0)
     Start-Sleep -Milliseconds 300
     [User32]::keybd_event([User32]::VK_LEFT, 0, [User32]::KEYEVENTF_KEYDOWN, 0)
@@ -363,113 +291,115 @@ function SplitView {
     [User32]::keybd_event([User32]::VK_RETURN, 0, [User32]::KEYEVENTF_KEYUP, 0)
 }
 
+function MaximizeWindow {
+    <#
+    .SYNOPSIS
+        Maximize PowerShell window
+    .NOTES
+        Author: fs
+        Last edit: 17_12_2024 fs
+        Version:
+            1.0 - added basic functionality
+    #>
+
+    TypeInit
+    $wsh = New-Object -ComObject WScript.Shell
+    do { $activated = $wsh.AppActivate('Startup') } while ($activated -eq $false)
+
+    [User32]::keybd_event([User32]::VK_LWIN, 0, [User32]::KEYEVENTF_KEYDOWN, 0)
+    Start-Sleep -Milliseconds 100
+    [User32]::keybd_event([User32]::VK_UP, 0, [User32]::KEYEVENTF_KEYDOWN, 0)
+    Start-Sleep -Milliseconds 100
+    [User32]::keybd_event([User32]::VK_UP, 0, [User32]::KEYEVENTF_KEYUP, 0)
+    Start-Sleep -Milliseconds 100
+    [User32]::keybd_event([User32]::VK_LWIN, 0, [User32]::KEYEVENTF_KEYUP, 0)
+    Start-Sleep -Milliseconds 100
+}
+
 function ProPulsInstall {
-    #@'
+    <#
+    .SYNOPSIS
+        Auto-Install ProPuls program
+    .NOTES
+        Author: fs
+        Last edit: 17_12_2024 fs
+        Version:
+            1.0 - added basic functionality
+    #>
+
+    @'
     if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) { 
         Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandpath`"" -Verb RunAs
         exit 
     } 
     . "C:\ProgramData\Deployment\Startup\config.ps1"
 
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type @"
-    using System;
-    using System.Runtime.InteropServices;
-    public class User32 {
-        [DllImport("user32.dll")]
-        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
-        public const byte VK_LWIN = 0x5B;   
-        public const byte VK_LEFT = 0x25;   
-        public const byte VK_RETURN = 0x0D; 
-        public const uint KEYEVENTF_KEYDOWN = 0x0000; 
-        public const uint KEYEVENTF_KEYUP = 0x0002; 
-    }
-"@
-    $hostname = [System.Net.Dns]::GetHostName()
-    function TypeText {
-        param([string]$text)
-        
-        # Mapping virtual key codes for letters, numbers, and basic punctuation
-        $keyMapping = @{
-            'a' = 0x41
-            'b' = 0x42
-            'c' = 0x43
-            'd' = 0x44
-            'e' = 0x45
-            'f' = 0x46
-            'g' = 0x47
-            'h' = 0x48
-            'i' = 0x49
-            'j' = 0x4A
-            'k' = 0x4B
-            'l' = 0x4C
-            'm' = 0x4D
-            'n' = 0x4E
-            'o' = 0x4F
-            'p' = 0x50
-            'q' = 0x51
-            'r' = 0x52
-            's' = 0x53
-            't' = 0x54
-            'u' = 0x55
-            'v' = 0x56
-            'w' = 0x57
-            'x' = 0x58
-            'y' = 0x59
-            'z' = 0x5A
-            '0' = 0x30
-            '1' = 0x31
-            '2' = 0x32
-            '3' = 0x33
-            '4' = 0x34
-            '5' = 0x35
-            '6' = 0x36
-            '7' = 0x37
-            '8' = 0x38
-            '9' = 0x39
-        }
-        
-        foreach ($char in $text.ToCharArray()) {
-            $keyCode = $keyMapping[$char]
-            Write-Host $keyCode
-            [User32]::keybd_event($keyCode, 0, [User32]::KEYEVENTF_KEYDOWN, 0)
-            Start-Sleep -Milliseconds 300
-            [User32]::keybd_event($keyCode, 0, [User32]::KEYEVENTF_KEYUP, 0)
-            Start-Sleep -Milliseconds 300
-        }
-    }
-    
+    TypeInit
+
     function Enter {
         [User32]::keybd_event([User32]::VK_RETURN, 0, [User32]::KEYEVENTF_KEYDOWN, 0)
         Start-Sleep -Milliseconds 500
         [User32]::keybd_event([User32]::VK_RETURN, 0, [User32]::KEYEVENTF_KEYUP, 0)
     }
+
     function Tab {
         [User32]::keybd_event(0x09, 0, [User32]::KEYEVENTF_KEYDOWN, 0)  
         Start-Sleep -Milliseconds 500
         [User32]::keybd_event(0x09, 0, [User32]::KEYEVENTF_KEYUP, 0)  
     }
-    
+
+    function TypeText {
+        param([string]$text)
+        $keys = @(
+            @{ symbol = 'a'; code = 0x41 },
+            @{ symbol = 'd'; code = 0x44 },
+            @{ symbol = 'o'; code = 0x4F },
+            @{ symbol = 'r'; code = 0x52 },
+            @{ symbol = 'p'; code = 0x50 },
+            @{ symbol = 'c'; code = 0x43 },
+            @{ symbol = '0'; code = 0x30 },
+            @{ symbol = '1'; code = 0x31 },
+            @{ symbol = '2'; code = 0x32 },
+            @{ symbol = '3'; code = 0x33 },
+            @{ symbol = '4'; code = 0x34 },
+            @{ symbol = '5'; code = 0x35 },
+            @{ symbol = '6'; code = 0x36 },
+            @{ symbol = '7'; code = 0x37 },
+            @{ symbol = '8'; code = 0x38 },
+            @{ symbol = '9'; code = 0x39 } )    
+        foreach ($char in $text.ToCharArray()) {
+            $key = $keys | Where-Object { $_.symbol -eq $char }
+            [User32]::keybd_event($key.code, 0, [User32]::KEYEVENTF_KEYDOWN, 0)
+            Start-Sleep -Milliseconds 100
+            [User32]::keybd_event($key.code, 0, [User32]::KEYEVENTF_KEYUP, 0)
+            Start-Sleep -Milliseconds 100
+        }
+    }
+
     Start-Process -FilePath "C:\Users\filip.stirjan\Documents\Disk1\Setup.exe" -ErrorAction SilentlyContinue 
     $wsh = New-Object -ComObject WScript.Shell
     do { $activated = $wsh.AppActivate('ProPuls Setup') } while ($activated -eq $false)
-    Start-Sleep -s 4
+    Start-Sleep -s 1
     Enter
     Enter
-    TypeText $hostname
+    TypeText "$([System.Net.Dns]::GetHostName())"
     Tab
     TypeText "adoro"
     Tab
     Tab
     Enter
     Enter
-    Start-Sleep -s 10
+    Enter
+    Enter
+    Start-Sleep -s 7
+    Enter
+    Enter
     Enter
     Enter
     Enter
     Enter
     Remove-Item -Path "C:\ProPulsTemp" -Recurse
-#'@ | Out-File -Filepath "$($env:TEMP)\run.ps1" -Encoding UTF8
+'@ | Out-File -Filepath "$($env:TEMP)\run.ps1" -Encoding UTF8
     Start-Process -Filepath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -File `"$($env:TEMP)\run.ps1`"" -Wait
 }
 
@@ -506,6 +436,56 @@ function Cleanup {
     Start-Process -Filepath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -File `"$($env:TEMP)\remove.ps1`""
 }
 
+function AutoHotkeyFill {
+    <#
+    .SYNOPSIS
+        Send hotkeys
+    .NOTES
+        Author: fs
+        Last edit: 9_12_2024 fs
+        Version:
+            1.0 - added basic functionality
+    #>
+
+    $wsh = New-Object -ComObject WScript.Shell
+    do { $active = $wsh.AppActivate('Prijava korisnika') } while ($active -eq $false)
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys($pulsServer) 
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys($pulsLogin.user) 
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys($pulsLogin.pwd) 
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys("{ENTER}") 
+    do { $active = $wsh.AppActivate('Izbor tvrtke i poslovne godine') } while ($active -eq $false)
+    $wsh.SendKeys("{ENTER}") 
+    Start-Sleep -s 1
+    $wsh.SendKeys("%{F4}")
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys("{ENTER}") 
+}
+
+function AutoHotkeyAccept {
+    <#
+    .SYNOPSIS
+        Send hotkeys
+    .NOTES
+        Author: fs
+        Last edit: 6_12_2024 fs
+        Version:
+            1.0 - added basic functionality
+    #>
+
+    $wsh = New-Object -ComObject WScript.Shell
+    do { $active = $wsh.AppActivate('Application Install - Security Warning') } while ($active -eq $false)
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys("{TAB}") 
+    $wsh.SendKeys("{ENTER}") 
+}
+
 function NewRegistry {
     <#
     .SYNOPSIS
@@ -539,6 +519,28 @@ function NewRegistry {
     Pop-Location
 }
 
+function GetActive {
+    <#
+    .SYNOPSIS
+        Get active power plan
+    .NOTES
+        Author: fs
+        Last edit: 5_12_2024 fs
+        Version:
+            1.0 - added basic functionality
+    #>
+
+    $output = powercfg /list
+    $msg = $output -split "`n"
+    for ($i = 0; $i -lt $msg.Length; $i++) {
+        if ($msg[$i] -match "guid" -and $msg[$i] -match '\*') {
+            $index = $i
+            break
+        }
+    }
+    return $msg[$index]
+}
+
 function Prompt {
     <#
     .SYNOPSIS
@@ -559,10 +561,10 @@ function Prompt {
     return $response
 }
 
-function AutoHotkeyAccept {
+function Print {
     <#
     .SYNOPSIS
-        Send hotkeys
+        Writes output with time format
     .NOTES
         Author: fs
         Last edit: 6_12_2024 fs
@@ -570,45 +572,58 @@ function AutoHotkeyAccept {
             1.0 - added basic functionality
     #>
 
-    $wsh = New-Object -ComObject WScript.Shell
-    do { $active = $wsh.AppActivate('Application Install - Security Warning') } while ($active -eq $false)
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys("{ENTER}") 
+    param ( [string] $string )
+
+    if ($string.StartsWith("`n")) {
+        $new = $string.Split([Environment]::NewLine)
+        Write-Host "`n$(Time) $($new[1])"
+    } else {
+        Write-Host "$(Time) $string"
+    }
 }
 
-function AutoHotkeyFill {
+function Time {
     <#
     .SYNOPSIS
-        Send hotkeys
+        Returns time in specific format
     .NOTES
         Author: fs
-        Last edit: 9_12_2024 fs
+        Last edit: 6_12_2024 fs
+        Version:
+            1.0 - added basic functionality
+    #>
+    return (Get-Date -Format '|dd.MM.yyyy, HH:mm:ss|')
+}
+
+function Timer {
+    <#
+    .SYNOPSIS
+        Display message every $s seconds
+    .PARAMETER s
+        Determines how many seconds until some event
+    .PARAMETER text
+        Text to display 
+    .PARAMETER text2
+        Banner to display 
+    .NOTES
+        Author: fs
+        Last edit: 20_11_2024 fs
         Version:
             1.0 - added basic functionality
     #>
 
-    $wsh = New-Object -ComObject WScript.Shell
-    do {
-        $active = $wsh.AppActivate('Prijava korisnika')
-    } while ($active -eq $false)
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys($pulsServer) 
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys($pulsLogin.user) 
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys($pulsLogin.pwd) 
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys("{ENTER}") 
-    do { $active = $wsh.AppActivate('Izbor tvrtke i poslovne godine') } while ($active -eq $false)
-    $wsh.SendKeys("{ENTER}") 
-    Start-Sleep -s 1
-    $wsh.SendKeys("%{F4}")
-    $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys("{ENTER}") 
+    param (
+        [Parameter(Mandatory=$true)] [int] $s, 
+        [Parameter(Mandatory=$true)] [string] $text,
+        [string] $text2
+    )
+
+    for ($i = $s; $i -ge 1; $i--) {
+        if ($text2) { DisplayBanner -text $text2 }
+        Write-Host "$($text) $i s"
+        Start-Sleep -s 1
+        Clear-Host
+    }
 }
 
 function DisplayOptions {

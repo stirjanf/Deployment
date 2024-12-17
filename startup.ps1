@@ -93,7 +93,8 @@ if ("$($user)" -match "admin.") {
     }
 }
 
-DisplayBanner "Puls software installations script"
+DisplayBanner "Puls software auto-installations"
+MaximizeWindow
 
 foreach ($file in $files) {
     Print "Starting $file installation..."
@@ -132,6 +133,7 @@ foreach ($file in $files) {
                 if (-not (Test-Path "C:\ProPuls")) {
                     Copy-Item -Path $file -Destination "C:\ProPulsTemp" -Recurse
                     ProPulsInstall
+                    Print "Done."
                     Start-Sleep -s 4
                 } else {
                     Print "$file already installed..."

@@ -117,11 +117,6 @@ $ProgressPreference = "SilentlyContinue"
 Install-Language -Language hr-HR
 $ProgressPreference = $ProgressPreference_bk
 
-Start-Service w32time
-Set-Service w32time -StartupType Automatic
-w32tm /config /manualpeerlist:"time.windows.com" /syncfromflags:manual /reliable:YES /update
-w32tm /resync
-
 $list = New-WinUserLanguageList -Language en-GB
 $list.Add("hr-HR")
 Set-WinUserLanguageList $list -Force
