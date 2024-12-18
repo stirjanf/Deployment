@@ -1,7 +1,4 @@
-# Windows deployment for custom device config project
-
-
-# Various scripts that deploy via Microsoft Provisioning Packages
+# Windows deployment for custom device config 
 
 This project was specifically made for Adoro d.o.o in order to speed up the repetitive process of device preparations for end-users. It contains few scripts that are deployed and executed in following order:
 
