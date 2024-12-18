@@ -101,7 +101,7 @@ Print "`nActive hours set to: $($activeHoursStart)-$($activeHoursEnd)h"
 
 $company = Get-ItemProperty -Path "HKLM:\Software\Deployment" -name "Company" -ErrorAction SilentlyContinue
 if ($company -ne "None") {
-    $path = "$($root)\Scripts\data.json"
+    $path = "$($root)\Startup\data.json"
     if (Test-path $path) {
         $data = Get-Content $path | ConvertFrom-Json
         $password = $data.users | Where-Object { $_.username -match "admin" } | Select-Object -ExpandProperty password | ConvertTo-SecureString -AsPlainText -Force

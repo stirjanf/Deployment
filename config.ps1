@@ -43,7 +43,7 @@
         > break - splits object to 2 parts: essential programs for every computer and optional programs below it
 #>
 
-                                            <# | EDITABLE | #>
+                        <# | EDITABLE | #>
 $tv_settings = "C:\ProgramData\Deployment\Other\settings.tvopt"
 $global:root = "C:\ProgramData\Deployment"
 $global:logs = "$($root)\Logs"

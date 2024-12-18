@@ -26,6 +26,10 @@ function CreateFolder {
     }
 }
 
+function Time {
+    return (Get-Date -Format '|dd.MM.yyyy, HH:mm:ss|')
+}
+
 function Print {
     param ( [string] $string )
     if ($string.StartsWith("`n")) {
