@@ -2,28 +2,27 @@
 .SYNOPSIS
     Run scripts on second startup and perform system changes
 .DESCRIPTION
-    1. Check for internet connection and block rest of the code until it's established
-    2. Change local admin password
-    3. Start execution of every script in Scripts folder except those defined in Where-Object line
-    4. Add startup.ps1 script to Run registry so it executes on every logon
-    5. Delete a Task that called it 
-    6. Import default associations file
-    7. Set high performance plan
-    8. Set monitor sleep
-    9. Set active hours
-    10. Enable file removal by setting "HKCU:\Software\Deployment\Clean" to Yes
-    11. Download Croatian language to the current user
-    12. Set the display language to English
-    13. Set the regional format to Croatian
-    14. Set the input language to Croatian
-    15. Set the location to Croatia
-    16. Set timezone to Central European
-    17. Copy those settings to all users on computer
-    18. Ask to join domain
-    19. Restart computer
+    * Check for internet connection and block rest of the code until it's established
+    * Change local admin password
+    * Start execution of every script in Scripts folder except those defined in Where-Object line
+    * Add startup.ps1 script to Run registry so it executes on every logon
+    * Delete a Task that called it
+    * Set high performance plan
+    * Set monitor sleep
+    * Set active hours
+    * Enable file removal by setting "HKCU:\Software\Deployment\Clean" to Yes
+    * Download Croatian language to the current user
+    * Set the display language to English
+    * Set the regional format to Croatian
+    * Set the input language to Croatian
+    * Set the location to Croatia
+    * Set timezone to Central European
+    * Copy those settings to all users on computer
+    * Ask to join domain
+    * Restart computer
 .NOTES
     Author: fs
-    Last edit: 4_12_2024 fs
+    Last edit: 17_12_2024 fs
     Version:
         1.0 - added basic functionality
         1.1 - added password change for admin user
@@ -100,17 +99,23 @@ New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Nam
 New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Name "ActiveHoursEnd" -Value $activeHoursEnd -PropertyType DWord -Force | Out-Null
 Print "`nActive hours set to: $($activeHoursStart)-$($activeHoursEnd)h"
 
-$path = "$($root)\Other\apwd.txt"
-if (Test-path $path) {
-    $password = Get-Content $path -Raw | ConvertTo-SecureString -AsPlainText -Force
-    Set-LocalUser -name "admin" -Password $password
-    Remove-Item $path -Force
-    Print "`nAdmin password changed successfuly."
-} else { 
-    Print "`nPassword file: $($path) does not exist." 
+$company = Get-ItemProperty -Path "HKLM:\Software\Deployment" -name "Company" -ErrorAction SilentlyContinue
+if ($company -ne "None") {
+    $path = "$($root)\Scripts\data.json"
+    if (Test-path $path) {
+        $data = Get-Content $path | ConvertFrom-Json
+        $password = $data.users | Where-Object { $_.username -match "admin" } | Select-Object -ExpandProperty password | ConvertTo-SecureString -AsPlainText -Force
+        Set-LocalUser -name "admin" -Password $password
+        $data.users = $data.users | Where-Object { $_.username -notmatch "admin" }
+        Remove-Item $path -Force
+        $data | ConvertTo-Json -Depth 3 | Set-Content $path
+        Print "`nAdmin password changed successfuly."
+    } else { 
+        Print "`nPassword file: $($path) does not exist." 
+    }
 }
 
-Print "`nDownloading Croatian language pack..."
+Print "`nDownloading Croatian language pack, please be patient..."
 
 $ProgressPreference_bk = $ProgressPreference
 $ProgressPreference = "SilentlyContinue"
@@ -143,34 +148,49 @@ Print "Copied language settings across the system.`n"
 
 Stop-Transcript | Out-Null
 
-do {
-    $err = $false
-    $accept = Prompt "$(Time) Do you want to join domain now? (y/n)"
-    if ($accept -eq "y") {
-        ping "192.168.21.1"
-        ipconfig /flushdns
-        ping "192.168.21.1"
-        if ((Get-ItemProperty -Path "HKLM:\Software\Deployment" -Name "Company" -ErrorAction SilentlyContinue) -eq "Adoro") {
-            try {
-                Add-Computer -DomainName $adoroDomain 
-            } catch {
-                Print "An error occured: $($_.Exception.Message)`n"
-                $err = $true
+if ($company -ne "None") {
+    do {
+        $err = $false
+        $accept = Prompt "$(Time) Do you want to join domain now? (y/n)"
+        if ($accept -eq "y") {
+            ping "192.168.21.1"
+            ipconfig /flushdns
+            ping "192.168.21.1"
+            if ((Get-ItemProperty -Path "HKLM:\Software\Deployment" -Name "Company" -ErrorAction SilentlyContinue) -eq "Adoro") {
+                try {
+                    Add-Computer -DomainName $adoroDomain 
+                } catch {
+                    Print "An error occured: $($_.Exception.Message)`n"
+                    $err = $true
+                }
+            } else {
+                # Add-Computer -DomainName $brandorDomain (in future, uncomment this line and delete line below)
+                try {
+                    Add-Computer -DomainName $adoroDomain 
+                } catch {
+                    Print "An error occured: $($_.Exception.Message)`n"
+                    $err = $true
+                }
             }
-        } else {
-            # Add-Computer -DomainName $brandorDomain (in future, uncomment this line and delete line below)
-            try {
-                Add-Computer -DomainName $adoroDomain 
-            } catch {
-                Print "An error occured: $($_.Exception.Message)`n"
-                $err = $true
-            }
-        }
-    } 
-} while ($err)
+        } 
+    } while ($err)
+}
 
 Print "Executing $($root)\Startup\startup.ps1..."
 Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$($root)\Startup\startup.ps1`""
 
-$accept = Prompt "`n$(Time) Do you want to restart your computer now? (y/n)" 
-if ($accept -eq 'y') { Restart-Computer -Force }
+do {
+    $ready = $true
+    Write-Host ""
+    $accept = Prompt "$(Time) Do you want to restart your computer now? (y/n)" 
+    if ($accept -eq 'y') {
+        $status = Get-ItemProperty -Path "HKCU:\Software\Deployment" -Name "Finished" -ErrorAction SilentlyContinue 
+        if ($status.Finished -eq "Yes") { 
+            $ready = $true
+            Restart-Computer -Force 
+        } else {
+            Write-Host "Installations still in progress. Try again later."
+            $ready = $false
+        }
+    } 
+} while ($ready -eq $false)

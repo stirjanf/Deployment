@@ -2,16 +2,15 @@
 .SYNOPSIS
     Perform certain actions on every startup for every user
 .DESCRIPTION
-    1. Read "HKLM:\Software\Deployment\Company" for correct Andromeda installation
-    2. Create default registries if not present
-    3. Perform deployment files cleanup but only on local admin
-    4. Perform UI changes with Fix function on all users
-    5. Begin Puls installations only if user is domain user but not domain admin
-    6. Prompt user for more installations
-    7. Display installed software
+    * Read "HKLM:\Software\Deployment\Company" for correct Andromeda installation
+    * Create default registries if not present
+    * Perform deployment files cleanup but only on local admin
+    * Perform UI changes with Fix function on all users
+    * Begin Puls installations only if user is domain user but not domain admin
+    * Prompt user for additional installations
 .NOTES
     Author: fs
-    Last edit: 12_12_2024 fs
+    Last edit: 17_12_2024 fs
     Version:
         1.0 - added basic functionality
         1.1 - added selectable options
@@ -23,6 +22,7 @@
         1.7 - bug fixes + dynamic improvements + some variables are now moved to config.ps1 for easier access
         1.8 - added auto hotkeys and information fills + bug fixes
         1.9 - auto fill improvements
+        1.10 - bug fixes + improvements
 #>
 
 function TryAgain {

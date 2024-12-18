@@ -2,11 +2,11 @@
 .SYNOPSIS
     Prepare system for deployment
 .DESCRIPTION
-    1. create local admin without password for auto-login
-    2. remove bloatware
-    3. create Deployment directory in ProgramData and sort files 
-    4. create RunOnce registry that will execute system-first-boot.ps1 for first time login
-    5. remove certain registries (OneDrive, Privacy Experience...)
+    * Create local admin without password for auto-login
+    * Remove bloatware
+    * Create Deployment directory in ProgramData and sort files 
+    * Create RunOnce registry that will execute system-first-boot.ps1 for first time login
+    * Remove certain registries (OneDrive, Privacy Experience...)
 .NOTES
     Author: fs
     Last edit: 29_11_2024 fs
@@ -88,9 +88,9 @@ $log = "$($root)\Logs\system-setup.log"
 Start-Transcript -Path $log -Append | Out-Null
 
 Get-ChildItem | Where-Object {$_.Name -ne "system-setup.ps1"} | ForEach-Object{
-    if ($_.Name -like "startup*" -or $_.Name -like "config*" -or $_.Name -like "start2*") {
+    if ($_.Name -like "startup*" -or $_.Name -like "config*" -or $_.Name -like "start2*" -or $_.Name -like "data*") {
         Copy-Item $_.FullName "$($root)\Startup\$($_.Name)" -Force
-    } elseif ($_.name -match "fix") {
+    } elseif ($_.name -match "tool") {
         Copy-Item $_.FullName "$($root)\Tools\$($_.Name)" -Force
     } elseif ($_.Extension -eq ".ps1") {
         Copy-Item $_.FullName "$($root)\Scripts\$($_.Name)" -Force

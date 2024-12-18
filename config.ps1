@@ -44,17 +44,17 @@
 #>
 
                                             <# | EDITABLE | #>
-$tv_configId = "6sbnsa6"
 $tv_settings = "C:\ProgramData\Deployment\Other\settings.tvopt"
 $global:root = "C:\ProgramData\Deployment"
 $global:logs = "$($root)\Logs"
-$global:adoroDomain = "adoro-tueren.lan"
-$global:pulsServer = "adoro-puls.adoro-tueren.lan"
-$global:pulsLogin = @{user="pogon"; pwd="po27"}
-$global:timeoutMonitor = 120  
-$global:activeHoursStart = 6      
-$global:activeHoursEnd = 20    
-$global:delay = 60   
+$data = Get-Content "$($root)\Startup\data.json" | ConvertFrom-Json 
+$global:adoroDomain = $data.servers | Where-Object { $_.name -match "domain" } | Select-Object -ExpandProperty url
+$global:pulsServer = $data.servers | Where-Object { $_.name -match "puls" } | Select-Object -ExpandProperty url
+$global:pulsLogin = $data.users | Where-Object { $_.username -match "pogon" } 
+$tv_configId = $data.other | Where-Object { $_.name -match "config" } | Select-Object -ExpandProperty info
+$global:timeoutMonitor = $data.other | Where-Object { $_.name -match "timeout" } | Select-Object -ExpandProperty info 
+$global:activeHoursStart = $data.other | Where-Object { $_.name -match "start" } | Select-Object -ExpandProperty info      
+$global:activeHoursEnd = $data.other | Where-Object { $_.name -match "end" } | Select-Object -ExpandProperty info     
 $global:scripts = @(    <# Scripts to run with system-second-boot.ps1 #>  
     "$($root)\Scripts\install.ps1"
     "$($root)\Startup\startup.ps1"
@@ -455,9 +455,9 @@ function AutoHotkeyFill {
     $wsh.SendKeys($pulsServer) 
     $wsh.SendKeys("{TAB}") 
     $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys($pulsLogin.user) 
+    $wsh.SendKeys($pulsLogin.username) 
     $wsh.SendKeys("{TAB}") 
-    $wsh.SendKeys($pulsLogin.pwd) 
+    $wsh.SendKeys($pulsLogin.password) 
     $wsh.SendKeys("{TAB}") 
     $wsh.SendKeys("{ENTER}") 
     do { $active = $wsh.AppActivate('Izbor tvrtke i poslovne godine') } while ($active -eq $false)

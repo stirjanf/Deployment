@@ -69,6 +69,7 @@ $programs | ForEach-Object {
 }
 
 Print "`nInstallations finished. If any errors occured check log file at $($log)`n"
+Set-ItemProperty -Path "HKCU:\Software\Deployment" -Name "Finished" -Value "Yes"
 
 DisplayInstalledPrograms
 
