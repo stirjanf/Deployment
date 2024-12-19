@@ -31,5 +31,20 @@ This project was specifically made for Adoro d.o.o in order to speed up the repe
 
 # How to use this project with Provisioning Packages
 
-Watch the quick video guide:
-<a href="https://www.youtube.com/" target="_blank"> </a>
+1. open Windows Configuration Manager
+2. advanced provisioning
+    * create new project called deployment-v(version)
+    * all Windows desktop editions
+    * finish
+3. runtime settings
+   * Accounts
+         - ComputerName: v(version)
+   * OOBE
+         - HideOobe: TRUE
+   * ProvisioningCommands
+         - DeviceContext
+             - CommandFiles: import scripts, installation and deployment files
+             - CommandLine: powershell.exe -ExecutionPolicy Bypass -File system-setup.ps1
+4. File - Save
+5. Export - Provisioning Package
+6. Copy .ppkg file to USB stick
