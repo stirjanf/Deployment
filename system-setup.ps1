@@ -9,11 +9,12 @@
     * Remove certain registries (OneDrive, Privacy Experience...)
 .NOTES
     Author: fs
-    Last edit: 29_11_2024 fs
+    Last edit: 19_12_2024 fs
     Version:
         1.0 - added basic functionality
         1.1 - fixed folder creation logic and file sorting
         1.2 - bug fixes
+        1.3 - fixed RDP VPN bug
 #>
 
 function CreateFolder {
@@ -43,43 +44,21 @@ function Print {
 Start-Service w32time
 Set-Service w32time -StartupType Automatic
 w32tm /config /manualpeerlist:"time.windows.com" /syncfromflags:manual /reliable:YES /update
-w32tm /resync
+w32tm /resync 
 
 New-LocalUser -Name "admin" -NoPassword
 Set-LocalUser -Name "admin" -PasswordNeverExpires $true 
 Add-LocalGroupMember -Group "Administrators" -Member "admin"
 
 $apps = 
-"Clipchamp.Clipchamp",
-"Microsoft.WindowsAlarms",
-"Microsoft.WindowsMaps",
-"Microsoft.ZuneMusic",
-"Microsoft.BingNews",
-"Microsoft.Todos",
-"Microsoft.ZuneVideo",
-"Microsoft.ScreenSketch",
-"Microsoft.MicrosoftSolitaireCollection",
-"Microsoft.BingWeather",
-"Microsoft.Xbox.TCUI",
-"Microsoft.GamingApp",
-"Microsoft.549981C3F5F10",
-"Microsoft.WindowsFeedbackHub",
-"microsoft.windowscommunicationsapps",
 "Microsoft.MicrosoftOfficeHub",
-"Microsoft.OutlookForWindows", 
-"Microsoft.People",
-"Microsoft.PowerAutomateDesktop",
-"MicrosoftCorporationII.QuickAssist",
-"Microsoft.WindowsSoundRecorder",
-"Microsoft.MicrosoftStickyNotes",
 "Microsoft.Windows.Ai.Copilot.Provider",
-"*Teams*",
-"*Copilot*"
+"*Teams*"
 
 foreach ($app in $apps){
     Get-AppxPackage | Where-Object {$_.PackageFullName -like $app} | Remove-AppxPackage -AllUser
     Get-AppxProvisionedPackage -Online | Where-Object{$_.DisplayName -like $app} | Remove-AppxProvisionedPackage -Online -AllUser
-}
+} 
 
 $root = "C:\ProgramData\Deployment"
 CreateFolder -path $root
@@ -108,19 +87,9 @@ Get-ChildItem | Where-Object {$_.Name -ne "system-setup.ps1"} | ForEach-Object{
 
 New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" -Name "FirstBoot" -Value ("cmd /c powershell.exe -ExecutionPolicy Bypass -File {0}\Scripts\system-first-boot.ps1" -f $root)
 Print "Boot script has been set."
-New-Item "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\DisableOneDrive" | New-ItemProperty -Name "StubPath" -Value 'REG DELETE "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v OneDriveSetup /f'
-Print "Disabled OneDrive."
-New-Item "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\HideCopilot" | New-ItemProperty -Name "StubPath" -Value 'REG ADD "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowCopilotButton /t REG_DWORD /d 0 /f'
-Print "Disabled Copilot.`n"
 
-@( "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\DevHomeUpdate", "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\OutlookUpdate" ) | ForEach-Object {
-    if (Test-Path $_) {
-        Remove-Item $_ -Force
-        Print "`nSuccessfully removed: $_"
-    } else { 
-        Print "`nPath not found: $_" 
-    }
-}
+New-Item "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\HideCopilot" | New-ItemProperty -Name "StubPath" -Value 'REG ADD "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowCopilotButton /t REG_DWORD /d 0 /f'
+Print "Removed Copilot btn.`n"
 
 $settings = 
     [PSCustomObject]@{

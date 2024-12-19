@@ -57,36 +57,36 @@ if ($company -ne 3) {
     if ($accept -eq "y") { 
         Set-ItemProperty -Path "HKCU:\Software\Deployment" -Name "InstallEset" -Value "Yes"
     }
-
-    DisplayBanner -text "Office select & install"
-    $programs = $software | Where-Object { $_.name -match "Office"}
-    DisplayOptions -list $programs
-
-    do {
-        $pass = $false
-        $selection = Read-Host "$(Time) Type in the number for the Office packet you wish to install. q = none above"
-        if ($selection -eq "q") { 
-            $index = 0
-            $pass = $true 
-        } else {
-            $index = $selection -as [int]
-            if($index -gt $programs.Length -or $index -lt 1){
-                Print "Index out of range, try again.`n"
-            } else { 
-                $pass = $true 
-            }
-        }
-    } while ($pass -ne $true)
-
-    Set-ItemProperty -Path "HKCU:\Software\Deployment" -Name "Office" -Value $index
-    Write-Host ""
-
-    do {
-        $name = Read-Host "$(Time) Enter the hostname (PC will restart after confirmation)"
-        $confirm = Read-Host "$(Time) Confirm? (y/n)"
-        Write-Host ""
-    } while ($confirm -ne "y")
 }
+
+DisplayBanner -text "Office select & install"
+$programs = $software | Where-Object { $_.name -match "Office"}
+DisplayOptions -list $programs
+
+do {
+    $pass = $false
+    $selection = Read-Host "$(Time) Type in the number for the Office packet you wish to install. q = none above"
+    if ($selection -eq "q") { 
+        $index = 0
+        $pass = $true 
+    } else {
+        $index = $selection -as [int]
+        if($index -gt $programs.Length -or $index -lt 1){
+            Print "Index out of range, try again.`n"
+        } else { 
+            $pass = $true 
+        }
+    }
+} while ($pass -ne $true)
+
+Set-ItemProperty -Path "HKCU:\Software\Deployment" -Name "Office" -Value $index
+Write-Host ""
+
+do {
+    $name = Read-Host "$(Time) Enter the hostname (PC will restart after confirmation)"
+    $confirm = Read-Host "$(Time) Confirm? (y/n)"
+    Write-Host ""
+} while ($confirm -ne "y")
 
 $action = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\Deployment\Scripts\system-second-boot.ps1"'
 $trigger = New-ScheduledTaskTrigger -AtLogOn

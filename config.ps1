@@ -376,7 +376,7 @@ function ProPulsInstall {
         }
     }
 
-    Start-Process -FilePath "C:\Users\filip.stirjan\Documents\Disk1\Setup.exe" -ErrorAction SilentlyContinue 
+    Start-Process -FilePath "C:\ProPulsTemp\Disk1\Setup.exe" -ErrorAction SilentlyContinue 
     $wsh = New-Object -ComObject WScript.Shell
     do { $activated = $wsh.AppActivate('ProPuls Setup') } while ($activated -eq $false)
     Start-Sleep -s 1

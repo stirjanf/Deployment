@@ -158,7 +158,7 @@ if ($company -ne "None") {
             ping "192.168.21.1"
             if ((Get-ItemProperty -Path "HKLM:\Software\Deployment" -Name "Company" -ErrorAction SilentlyContinue) -eq "Adoro") {
                 try {
-                    Add-Computer -DomainName $adoroDomain 
+                    Add-Computer -DomainName $adoroDomain -ErrorAction Stop
                 } catch {
                     Print "An error occured: $($_.Exception.Message)`n"
                     $err = $true
@@ -166,7 +166,7 @@ if ($company -ne "None") {
             } else {
                 # Add-Computer -DomainName $brandorDomain (in future, uncomment this line and delete line below)
                 try {
-                    Add-Computer -DomainName $adoroDomain 
+                    Add-Computer -DomainName $adoroDomain -ErrorAction Stop
                 } catch {
                     Print "An error occured: $($_.Exception.Message)`n"
                     $err = $true
