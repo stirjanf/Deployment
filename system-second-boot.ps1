@@ -136,10 +136,10 @@ Print "Input language set to: Croatia"
 Set-Culture -CultureInfo "hr-HR"
 Print "Location set to: Croatia"
 
+TimeUpdate
 Set-TimeZone -Name "Central European Standard Time"
 w32tm /config /manualpeerlist:"time.windows.com" /syncfromflags:manual /reliable:YES /update
 w32tm /resync
-
 Print "Timezone set to: Central European Standard Time"
 
 Set-Culture -CultureInfo "hr-HR"

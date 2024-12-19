@@ -45,6 +45,7 @@ $files2 = $paths[($paths.IndexOf("break") + 1)..($paths.Length-1)]
 
 $reg = "HKCU:\Software\Deployment"
 $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+TimeUpdate
 
 if (-not (Test-Path $reg)) {
     NewRegistry -root "HKCU:\Software" -key 'Deployment' -item "Unpinned" -value "No"

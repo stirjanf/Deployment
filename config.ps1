@@ -164,8 +164,6 @@ function Fix {
             Set-ItemProperty -path $_.PSpath -name 'IsPromoted' -Type 'DWORD' -value 1 
         }
     }
-
-    Set-Culture -CultureInfo "hr-HR"
 }
 
 function Install {
@@ -484,6 +482,24 @@ function AutoHotkeyAccept {
     $wsh.SendKeys("{TAB}") 
     $wsh.SendKeys("{TAB}") 
     $wsh.SendKeys("{ENTER}") 
+}
+
+function TimeUpdate {
+    <#
+    .SYNOPSIS
+        Update timezone
+    .NOTES
+        Author: fs
+        Last edit: 19_12_2024 fs
+        Version:
+            1.0 - added basic functionality
+    #>
+
+    Start-Service w32time
+    Set-Service w32time -StartupType Automatic
+    w32tm /config /manualpeerlist:"time.windows.com" /syncfromflags:manual /reliable:YES /update
+    w32tm /resync
+    Set-Culture -CultureInfo "hr-HR"
 }
 
 function NewRegistry {

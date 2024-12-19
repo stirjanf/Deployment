@@ -26,11 +26,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
 $host.ui.RawUI.WindowTitle = "Select company and hostname"
 . "C:\ProgramData\Deployment\Startup\config.ps1"
 
-Start-Service w32time
-Set-Service w32time -StartupType Automatic
-w32tm /config /manualpeerlist:"time.windows.com" /syncfromflags:manual /reliable:YES /update
-w32tm /resync
-
+TimeUpdate
 NewRegistry -root "HKLM:\Software" -key 'Deployment' -item "Company" -value "Not selected"
 NewRegistry -root "HKCU:\Software" -key 'Deployment' -item "InstallEset" -value "No"
 NewRegistry -root "HKCU:\Software" -key 'Deployment' -item "Office" -value "Not selected"
