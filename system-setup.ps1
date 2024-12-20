@@ -73,7 +73,7 @@ Start-Transcript -Path $log -Append | Out-Null
 Get-ChildItem | Where-Object {$_.Name -ne "system-setup.ps1"} | ForEach-Object{
     if ($_.Name -like "startup*" -or $_.Name -like "config*" -or $_.Name -like "start2*" -or $_.Name -like "data*") {
         Copy-Item $_.FullName "$($root)\Startup\$($_.Name)" -Force
-    } elseif ($_.name -match "tool") {
+    } elseif ($_.Extension -eq ".bat") {
         Copy-Item $_.FullName "$($root)\Tools\$($_.Name)" -Force
     } elseif ($_.Extension -eq ".ps1") {
         Copy-Item $_.FullName "$($root)\Scripts\$($_.Name)" -Force
